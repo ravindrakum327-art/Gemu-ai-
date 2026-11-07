@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gemu AI</title>
+
+<style>
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #13141b;
+  color: white;
+}
+header {
+  background: #20212a;
+  padding: 18px;
+  font-size: 24px;
+  font-weight: bold;
+  color: #8ab4f8;
+}
+#chat {
+  height: calc(100vh - 145px);
+  overflow-y: auto;
+  padding: 18px;
+}
+.welcome {
+  text-align: center;
+  margin-top: 100px;
+}
+.welcome h1 {
+  color: #8ab4f8;
+}
+.message {
+  padding: 13px;
+  margin: 12px 0;
+  border-radius: 15px;
+  max-width: 85%;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+.user {
+  background: #194589;
+  margin-left: auto;
+}
+.bot {
+  background: #292b36;
+  margin-right: auto;
+}
+footer {
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  display: flex;
+  padding: 12px;
+  background: #20212a;
+  gap: 8px;
+}
+input {
+  flex: 1;
+  padding: 15px;
+  border-radius: 25px;
+  border: none;
+  background: #30313b;
+  color: white;
+  outline: none;
+}
+button {
+  border: none;
+  border-radius: 50%;
+  width: 50px;
+  background: #8ab4f8;
+  font-size: 20px;
+}
+</style>
+</head>
+
+<body>
+
+<header>✦ Gemu AI</header>
+
+<div id="chat">
+  <div class="welcome" id="welcome">
+    <h1>नमस्ते! 👋</h1>
+    <p>मैं Gemu AI हूँ।</p>
+    <p>आज मैं आपकी क्या मदद कर सकता हूँ?</p>
+  </div>
+</div>
+
+<footer>
+  <input id="msg" type="text"
+  placeholder="अपना सवाल लिखें..."
+  onkeydown="if(event.key==='Enter') sendMessage()">
+
+  <button onclick="sendMessage()">➤</button>
+</footer>
+
+<script>
+function sendMessage() {
+  let input = document.getElementById("msg");
+  let text = input.value.trim();
+
+  if (!text) return;
+
+  document.getElementById("welcome").style.display = "none";
+
+  let chat = document.getElementById("chat");
+
+  let user = document.createElement("div");
+  user.className = "message user";
+  user.textContent = text;
+  chat.appendChild(user);
+
+  let bot = document.createElement("div");
+  bot.className = "message bot";
+  bot.textContent = "नमस्ते! आपका सवाल मिल गया। AI सेवा जोड़ने के बाद मैं इसका जवाब दे सकूँगा।";
+  chat.appendChild(bot);
+
+  input.value = "";
+  chat.scrollTop = chat.scrollHeight;
+}
+</script>
+
+</body>
+</html>
