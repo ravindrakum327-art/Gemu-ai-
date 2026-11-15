@@ -1,0 +1,13 @@
+
+{
+  "name": "gemu-ai",
+  "version": "1.0.0",
+  "description": "Gemu AI Assistant",
+  "main": "Server.js",
+  "scripts": {
+    "start": "node Server.js"
+  },
+  "dependencies": {
+    "express": "^4.21.2"
+  }
+}
