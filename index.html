@@ -97,32 +97,51 @@ button {
 
   <button onclick="sendMessage()">➤</button>
 </footer>
+</script>
 
-<script>
-function sendMessage() {
-  let input = document.getElementById("msg");
-  let text = input.value.trim();
+async function sendMessage() {
+  const input = document.getElementById("msg");
+  const text = input.value.trim();
 
   if (!text) return;
 
+  const chat = document.getElementById("chat");
   document.getElementById("welcome").style.display = "none";
 
-  let chat = document.getElementById("chat");
-
-  let user = document.createElement("div");
+  const user = document.createElement("div");
   user.className = "message user";
   user.textContent = text;
   chat.appendChild(user);
 
-  let bot = document.createElement("div");
+  input.value = "";
+
+  const bot = document.createElement("div");
   bot.className = "message bot";
-  bot.textContent = "नमस्ते! आपका सवाल मिल गया। AI सेवा जोड़ने के बाद मैं इसका जवाब दे सकूँगा।";
+  bot.textContent = "जवाब तैयार हो रहा है...";
   chat.appendChild(bot);
 
-  input.value = "";
+  try {
+    const response = await fetch("/api/chat", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ message: text })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || "AI Error");
+    }
+
+    bot.textContent = data.reply || "जवाब नहीं मिला।";
+  } catch (error) {
+    bot.textContent = "AI से कनेक्शन नहीं हो पाया।";
+  }
+
   chat.scrollTop = chat.scrollHeight;
 }
-</script>
 
 </body>
 </html>
