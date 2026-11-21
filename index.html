@@ -1,147 +1,358 @@
+
 <!DOCTYPE html>
 <html lang="hi">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Gemu AI</title>
-
 <style>
-* {
-  box-sizing: border-box;
+*{box-sizing:border-box}
+body{
+ margin:0;background:#13141b;color:white;
+ font-family:Arial,sans-serif
 }
-body {
-  margin: 0;
-  font-family: Arial, sans-serif;
-  background: #13141b;
-  color: white;
+header{
+ padding:18px;background:#20212a;
+ color:#8ab4f8;font-size:24px;font-weight:bold
 }
-header {
-  background: #20212a;
-  padding: 18px;
-  font-size: 24px;
-  font-weight: bold;
-  color: #8ab4f8;
+#chat{
+ height:calc(100vh - 180px);
+ overflow-y:auto;padding:16px
 }
-#chat {
-  height: calc(100vh - 145px);
-  overflow-y: auto;
-  padding: 18px;
+.welcome{text-align:center;margin-top:90px}
+.welcome h1{color:#8ab4f8}
+.message{
+ padding:13px;margin:12px 0;
+ border-radius:15px;max-width:85%;
+ line-height:1.5;white-space:pre-wrap
 }
-.welcome {
-  text-align: center;
-  margin-top: 100px;
+.user{background:#194589;margin-left:auto}
+.bot{background:#292b36;margin-right:auto}
+footer{
+ position:fixed;bottom:0;width:100%;
+ padding:12px;background:#20212a;
+ display:flex;gap:7px;align-items:center
 }
-.welcome h1 {
-  color: #8ab4f8;
+input{
+ min-width:0;flex:1;padding:14px;
+ border-radius:25px;border:0;
+ background:#30313b;color:white
 }
-.message {
-  padding: 13px;
-  margin: 12px 0;
-  border-radius: 15px;
-  max-width: 85%;
-  line-height: 1.5;
-  white-space: pre-wrap;
+button{
+ border:0;border-radius:50%;
+ width:48px;height:48px;
+ background:#8ab4f8;font-size:19px
 }
-.user {
-  background: #194589;
-  margin-left: auto;
-}
-.bot {
-  background: #292b36;
-  margin-right: auto;
-}
-footer {
-  position: fixed;
-  bottom: 0;
-  width: 100%;
-  display: flex;
-  padding: 12px;
-  background: #20212a;
-  gap: 8px;
-}
-input {
-  flex: 1;
-  padding: 15px;
-  border-radius: 25px;
-  border: none;
-  background: #30313b;
-  color: white;
-  outline: none;
-}
-button {
-  border: none;
-  border-radius: 50%;
-  width: 50px;
-  background: #8ab4f8;
-  font-size: 20px;
-}
+#status{font-size:12px;color:#8ab4f8;padding:5px 12px}
 </style>
 </head>
-
 <body>
 
 <header>✦ Gemu AI</header>
 
+<div id="status">नमस्ते! Gemu AI तैयार है।</div>
+
 <div id="chat">
-  <div class="welcome" id="welcome">
-    <h1>नमस्ते! 👋</h1>
-    <p>मैं Gemu AI हूँ।</p>
-    <p>आज मैं आपकी क्या मदद कर सकता हूँ?</p>
-  </div>
+ <div class="welcome" id="welcome">
+  <h1>नमस्ते! 👋</h1>
+  <p>मैं Gemu AI हूँ।</p>
+  <p>आज मैं आपकी क्या मदद कर सकती हूँ?</p>
+ </div>
 </div>
 
 <footer>
-  <input id="msg" type="text"
-  placeholder="अपना सवाल लिखें..."
-  onkeydown="if(event.key==='Enter') sendMessage()">
-
-  <button onclick="sendMessage()">➤</button>
+ <button onclick="startVoice()" title="बोलें">🎤</button>
+ <input id="msg" placeholder="अपना सवाल लिखें..."
+ onkeydown="if(event.key==='Enter')sendMessage()">
+ <button onclick="sendMessage()">➤</button>
+ <button onclick="toggleVoice()" title="आवाज">🔊</button>
 </footer>
+
 <script>
+let voiceOn=true;
+let recognition=null;
 
-async function sendMessage() {
-  const input = document.getElementById("msg");
-  const text = input.value.trim();
+function speak(text){
+ if(!voiceOn || !('speechSynthesis' in window))return;
 
-  if (!text) return;
+ speechSynthesis.cancel();
+ const msg=new SpeechSynthesisUtterance(text);
+ msg.lang="hi-IN";
 
-  const chat = document.getElementById("chat");
-  document.getElementById("welcome").style.display = "none";
+ const voices=speechSynthesis.getVoices();
+ const hindi=voices.filter(v=>v.lang.toLowerCase().startsWith("hi"));
 
-  const user = document.createElement("div");
-  user.className = "message user";
-  user.textContent = text;
-  chat.appendChild(user);
+ const female=hindi.find(v=>
+  /female|woman|heera|swara|lekha/i.test(v.name)
+ );
 
-  input.value = "";
+ if(female)msg.voice=female;
 
-  const bot = document.createElement("div");
-  bot.className = "message bot";
-  bot.textContent = "जवाब तैयार हो रहा है...";
-  chat.appendChild(bot);
+ speechSynthesis.speak(msg);
+}
 
-  try {
-    const response = await fetch("/api/chat", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ message: text })
-    });
+function toggleVoice(){
+ voiceOn=!voiceOn;
+ if(!voiceOn)speechSynthesis.cancel();
+ document.getElementById("status").textContent=
+ voiceOn?"आवाज चालू है":"आवाज बंद है";
+}
 
-    const data = await response.json();
+function startVoice(){
+ const SR=window.SpeechRecognition ||
+          window.webkitSpeechRecognition;
 
-    if (!response.ok) {
-      throw new Error(data.error || "AI Error");
-    }
+ if(!SR){
+  alert("इस ब्राउज़र में Voice Recognition उपलब्ध नहीं है।");
+  return;
+ }
 
-    bot.textContent = data.reply || "जवाब नहीं मिला।";
-  } catch (error) {
-    bot.textContent = "AI से कनेक्शन नहीं हो पाया।";
-  }
+ recognition=new SR();
+ recognition.lang="hi-IN";
+ recognition.interimResults=false;
 
-  chat.scrollTop = chat.scrollHeight;
+ recognition.onstart=()=>{
+  document.getElementById("status").textContent="सुन रही हूँ...";
+ };
+
+ recognition.onresult=(event)=>{
+  document.getElementById("msg").value=
+  event.results[0][0].transcript;
+  sendMessage();
+ };
+
+ recognition.onerror=()=>{
+  document.getElementById("status").textContent=
+  "माइक में समस्या है। दोबारा कोशिश करें।";
+ };
+
+ recognition.onend=()=>{
+  document.getElementById("status").textContent=
+  "Gemu AI तैयार है।";
+ };
+
+ recognition.start();
+}
+
+async function sendMessage(){
+ const input=document.getElementById("msg");
+ const text=input.value.trim();
+ if(!text)return;
+
+ const chat=document.getElementById("chat");
+ document.getElementById("welcome").style.display="none";
+
+ const user=document.createElement("div");
+ user.className="message user";
+ user.textContent=text;
+ chat.appendChild(user);
+ input.value="";
+
+ const bot=document.createElement("div");
+ bot.className="message bot";
+ bot.textContent="जवाब तैयार हो रहा है...";
+ chat.appendChild(bot);
+
+ try{
+  const response=await fetch("/api/chat",{
+   method:"POST",
+   headers:{"Content-Type":"application/json"},
+   body:JSON.stringify({message:text})
+  });
+
+  const data=await response.json();
+
+  if(!response.ok)throw new Error(data.error||"AI Error");
+
+  bot.textContent=data.reply||"जवाब नहीं मिला।";
+  speak(bot.textContent);
+
+ }catch(error){
+  bot.textContent="AI से कनेक्शन नहीं हो पाया।";
+ }
+
+ chat.scrollTop=chat.scrollHeight;
 }
 </script>
 </body>
+</html>
+
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gemu AI</title>
+<style>
+*{box-sizing:border-box}
+body{
+ margin:0;background:#13141b;color:white;
+ font-family:Arial,sans-serif
+}
+header{
+ padding:18px;background:#20212a;
+ color:#8ab4f8;font-size:24px;font-weight:bold
+}
+#chat{
+ height:calc(100vh - 180px);
+ overflow-y:auto;padding:16px
+}
+.welcome{text-align:center;margin-top:90px}
+.welcome h1{color:#8ab4f8}
+.message{
+ padding:13px;margin:12px 0;
+ border-radius:15px;max-width:85%;
+ line-height:1.5;white-space:pre-wrap
+}
+.user{background:#194589;margin-left:auto}
+.bot{background:#292b36;margin-right:auto}
+footer{
+ position:fixed;bottom:0;width:100%;
+ padding:12px;background:#20212a;
+ display:flex;gap:7px;align-items:center
+}
+input{
+ min-width:0;flex:1;padding:14px;
+ border-radius:25px;border:0;
+ background:#30313b;color:white
+}
+button{
+ border:0;border-radius:50%;
+ width:48px;height:48px;
+ background:#8ab4f8;font-size:19px
+}
+#status{font-size:12px;color:#8ab4f8;padding:5px 12px}
+</style>
+</head>
+<body>
+
+<header>✦ Gemu AI</header>
+
+<div id="status">नमस्ते! Gemu AI तैयार है।</div>
+
+<div id="chat">
+ <div class="welcome" id="welcome">
+  <h1>नमस्ते! 👋</h1>
+  <p>मैं Gemu AI हूँ।</p>
+  <p>आज मैं आपकी क्या मदद कर सकती हूँ?</p>
+ </div>
+</div>
+
+<footer>
+ <button onclick="startVoice()" title="बोलें">🎤</button>
+ <input id="msg" placeholder="अपना सवाल लिखें..."
+ onkeydown="if(event.key==='Enter')sendMessage()">
+ <button onclick="sendMessage()">➤</button>
+ <button onclick="toggleVoice()" title="आवाज">🔊</button>
+</footer>
+
+<script>
+let voiceOn=true;
+let recognition=null;
+
+function speak(text){
+ if(!voiceOn || !('speechSynthesis' in window))return;
+
+ speechSynthesis.cancel();
+ const msg=new SpeechSynthesisUtterance(text);
+ msg.lang="hi-IN";
+
+ const voices=speechSynthesis.getVoices();
+ const hindi=voices.filter(v=>v.lang.toLowerCase().startsWith("hi"));
+
+ const female=hindi.find(v=>
+  /female|woman|heera|swara|lekha/i.test(v.name)
+ );
+
+ if(female)msg.voice=female;
+
+ speechSynthesis.speak(msg);
+}
+
+function toggleVoice(){
+ voiceOn=!voiceOn;
+ if(!voiceOn)speechSynthesis.cancel();
+ document.getElementById("status").textContent=
+ voiceOn?"आवाज चालू है":"आवाज बंद है";
+}
+
+function startVoice(){
+ const SR=window.SpeechRecognition ||
+          window.webkitSpeechRecognition;
+
+ if(!SR){
+  alert("इस ब्राउज़र में Voice Recognition उपलब्ध नहीं है।");
+  return;
+ }
+
+ recognition=new SR();
+ recognition.lang="hi-IN";
+ recognition.interimResults=false;
+
+ recognition.onstart=()=>{
+  document.getElementById("status").textContent="सुन रही हूँ...";
+ };
+
+ recognition.onresult=(event)=>{
+  document.getElementById("msg").value=
+  event.results[0][0].transcript;
+  sendMessage();
+ };
+
+ recognition.onerror=()=>{
+  document.getElementById("status").textContent=
+  "माइक में समस्या है। दोबारा कोशिश करें।";
+ };
+
+ recognition.onend=()=>{
+  document.getElementById("status").textContent=
+  "Gemu AI तैयार है।";
+ };
+
+ recognition.start();
+}
+
+async function sendMessage(){
+ const input=document.getElementById("msg");
+ const text=input.value.trim();
+ if(!text)return;
+
+ const chat=document.getElementById("chat");
+ document.getElementById("welcome").style.display="none";
+
+ const user=document.createElement("div");
+ user.className="message user";
+ user.textContent=text;
+ chat.appendChild(user);
+ input.value="";
+
+ const bot=document.createElement("div");
+ bot.className="message bot";
+ bot.textContent="जवाब तैयार हो रहा है...";
+ chat.appendChild(bot);
+
+ try{
+  const response=await fetch("/api/chat",{
+   method:"POST",
+   headers:{"Content-Type":"application/json"},
+   body:JSON.stringify({message:text})
+  });
+
+  const data=await response.json();
+
+  if(!response.ok)throw new Error(data.error||"AI Error");
+
+  bot.textContent=data.reply||"जवाब नहीं मिला।";
+  speak(bot.textContent);
+
+ }catch(error){
+  bot.textContent="AI से कनेक्शन नहीं हो पाया।";
+ }
+
+ chat.scrollTop=chat.scrollHeight;
+}
+</script>
+</body>
+</html>
+
 
