@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">gemu AI pro</string>
+    <string name="title_activity_main">gemu AI pro</string>
+    <string name="package_name">com.gemuai.pro</string>
+    <string name="custom_url_scheme">com.gemuai.pro</string>
+</resources>
